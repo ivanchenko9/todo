@@ -1,11 +1,14 @@
 window.addEventListener('DOMContentLoaded', () => {
-    let todosAll = []
+    let todosAll = [],
+        confirmAllStatus = false
 
     const createTaskInput= document.querySelector('.create__task__input'),
           todoAmountSelector = document.querySelector('.task__amount__data'),
           changeModeAll = document.querySelector('.mode__all'),
           changeModeActive = document.querySelector('.mode__active'),
-          changeModeCompleted = document.querySelector('.mode__completed')
+          changeModeCompleted = document.querySelector('.mode__completed'),
+          clearAllCompletedBtn = document.querySelector('.clear__completed'),
+          confirmeAllBtn = document.querySelector('.confirme__all')
     let deleteTaskBtns = document.querySelectorAll('.task__delete'),
         changeStatusBtns = document.querySelectorAll('.task__status'),
         tasks = document.querySelector('.tasks')
@@ -61,6 +64,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 taskStatus.innerText = item.isCompleted?'Done':'In progress'
                 taskTitle.innerText = item.title
                 taskDelete.innerText = 'Delete'
+
+                task.setAttribute('data', item.id)
                  
                 task.append(taskStatus, taskTitle, taskDelete)
                 tasks.appendChild(task)
@@ -75,13 +80,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function addToTasks( event) {
         todosAll.push({
+            id: Date.now(),
             isCompleted: false,
             title: event.target.value
         })
-        // console.log('All: ', todosAll)
-        // console.log('Active: ', todosActive)
-        // console.log('Completed: ', todosCompleted)
-        //changeTasksAmount()
     }
 
     function creatTask (event) {
@@ -90,32 +92,32 @@ window.addEventListener('DOMContentLoaded', () => {
         event.target.value=''
     }
 
-    function bindDeleteTaskBtn (selectedArray) {
-        //let currentArray = selectedArray
+    function bindDeleteTaskBtn () {
         deleteTaskBtns = document.querySelectorAll('.task__delete')
         deleteTaskBtns.forEach(deleteBtn => {
             deleteBtn.addEventListener('click', (event) => {
-                selectedArray = selectedArray.filter(task => task.title !== event.target.parentNode.childNodes[1].textContent)
+                console.log('Attr: ', event.target.parentNode.getAttribute('data'))
+                todosAll = todosAll.filter(task => task.id !== Number(event.target.parentNode.getAttribute('data')))
                 changeTasksAmount()
-                displayTasks(selectedArray)
+                displayTasks(todosAll)
             })
         })
     }
-
-    function bindChangeStatusBtn (selectedArray) {
-        //let currentArray = selectedArray
+//event.target.parentNode.childNodes[1].textContent
+    function bindChangeStatusBtn () {
         changeStatusBtns = document.querySelectorAll('.task__status')
         changeStatusBtns.forEach(changeStatusBtn => {
             changeStatusBtn.addEventListener('click', (event) => {
-                selectedArray = selectedArray.map(changeStatusButton => {
-                    if(changeStatusButton.title === event.target.parentNode.childNodes[1].textContent) {
+                todosAll = todosAll.map(changeStatusButton => {
+                    if(changeStatusButton.id === Number(event.target.parentNode.getAttribute('data'))) {
                         return {
                             ...changeStatusButton,
                             isCompleted: !changeStatusButton.isCompleted
                         }
-                    } else return changeStatusButton
+                    } else { console.log('log')
+                    return changeStatusButton}
                 })
-                displayTasks(selectedArray)
+                displayTasks(todosAll)
                 changeTasksAmount()
             })
         })
@@ -142,28 +144,26 @@ window.addEventListener('DOMContentLoaded', () => {
         const todosCompleted = todosAll.filter((todo) => todo.isCompleted === true)
         displayTasks(todosCompleted)
     })
+
+    clearAllCompletedBtn.addEventListener('click', () => {
+        todosAll = todosAll.filter(todo => todo.isCompleted !== true)
+        displayTasks(todosAll)
+    })
+
+    confirmeAllBtn.addEventListener('click', () => {
+        if(confirmAllStatus){
+            todosAll = todosAll.map(todo => ({
+                ...todo,
+                isCompleted: false
+            }))
+        } else {
+            todosAll = todosAll.map(todo => ({
+                ...todo,
+                isCompleted: true
+        }))
+        }
+        confirmAllStatus = !confirmAllStatus
+        displayTasks(todosAll)
+    })
+    
 })
-
-
-// function creatTask(event){
-    //     const task = document.createElement('div'),
-    //           taskStatus = document.createElement('button'),
-    //           taskTitle = document.createElement('p'),
-    //           taskDelete = document.createElement('button')
-    //     task.classList.add('task')
-    //     taskStatus.classList.add('task__status')
-    //     taskTitle.classList.add('task__title')
-    //     taskDelete.classList.add('task__delete')
-    //     taskStatus.innerText = 'Done'
-    //     taskTitle.innerText = event.target.value
-    //     taskDelete.innerText = 'Delete'
-    //     task.append(taskStatus, taskTitle, taskDelete)
-    //     tasks.appendChild(task)
-    //     todosAll.push({
-    //         isCompleted: false,
-    //         title: event.target.value
-    //     })
-    //     event.target.value = ''
-    //     changeTasksAmount()
-    //     deleteTaskBtns = document.querySelectorAll('.task__delete')
-    // }
