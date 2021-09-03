@@ -9,8 +9,7 @@ window.addEventListener('DOMContentLoaded', () => {
           changeModeCompleted = document.querySelector('.mode__completed'),
           clearAllCompletedBtn = document.querySelector('.clear__completed'),
           confirmeAllBtn = document.querySelector('.confirme__all')
-    let deleteTaskBtns = document.querySelectorAll('.task__delete'),
-        changeStatusBtns = document.querySelectorAll('.task__status'),
+    let changeStatusBtns = document.querySelectorAll('.task__status'),
         tasks = document.querySelector('.tasks')
 
     changeTasksAmount()
@@ -69,9 +68,40 @@ window.addEventListener('DOMContentLoaded', () => {
                  
                 task.append(taskStatus, taskTitle, taskDelete)
                 tasks.appendChild(task)
+
+                //binding buttons for change task status
+
+                changeStatusBtns = document.querySelectorAll('.task__status')
+
+                changeStatusBtns.forEach(changeStatusBtn => {
+                    if (!changeStatusBtn.classList.contains('controled')){
+                    changeStatusBtn.addEventListener('click', (event) => {
+                        //const eventRepleced = event
+                        todosAll = createChangedStatusArray(event)
+                        displayTasks(todosAll)
+                        changeTasksAmount()
+                    })
+                    changeStatusBtn.classList.add('controled')
+                }
+            })
+
+                //binding buttons for delete task
+
+                let deleteTaskBtns = document.querySelectorAll('.task__delete')
+
+                deleteTaskBtns.forEach(deleteBtn => {
+                    if (!deleteBtn.classList.contains('controled')){
+                        deleteBtn.addEventListener('click', (event) => {
+                            //const eventRepleced = event
+                            todosAll = createAfterDeletingArray(event)
+                            changeTasksAmount()
+                            displayTasks(todosAll)
+                        })
+
+                        deleteBtn.classList.add('controled')
+                    }
+        })
         
-                bindChangeStatusBtn(selectedArray)
-                bindDeleteTaskBtn(selectedArray)
                 changeTasksAmount()
                 })
         }
@@ -92,36 +122,25 @@ window.addEventListener('DOMContentLoaded', () => {
         event.target.value=''
     }
 
-    function bindDeleteTaskBtn () {
-        deleteTaskBtns = document.querySelectorAll('.task__delete')
-        deleteTaskBtns.forEach(deleteBtn => {
-            deleteBtn.addEventListener('click', (event) => {
-                console.log('Attr: ', event.target.parentNode.getAttribute('data'))
-                todosAll = todosAll.filter(task => task.id !== Number(event.target.parentNode.getAttribute('data')))
-                changeTasksAmount()
-                displayTasks(todosAll)
-            })
+    function createChangedStatusArray (event) {
+        const newArray = todosAll.map(todo => {
+            const searchedId = Number(event.target.parentNode.getAttribute('data'))
+            if(todo.id === searchedId) {
+                return {
+                    ...todo,
+                    isCompleted: !todo.isCompleted
+                }
+            } else { console.log('log')
+            return {...todo}}
         })
+        return newArray
     }
-//event.target.parentNode.childNodes[1].textContent
-    function bindChangeStatusBtn () {
-        changeStatusBtns = document.querySelectorAll('.task__status')
-        changeStatusBtns.forEach(changeStatusBtn => {
-            changeStatusBtn.addEventListener('click', (event) => {
-                todosAll = todosAll.map(changeStatusButton => {
-                    if(changeStatusButton.id === Number(event.target.parentNode.getAttribute('data'))) {
-                        return {
-                            ...changeStatusButton,
-                            isCompleted: !changeStatusButton.isCompleted
-                        }
-                    } else { console.log('log')
-                    return changeStatusButton}
-                })
-                displayTasks(todosAll)
-                changeTasksAmount()
-            })
-        })
+
+    function createAfterDeletingArray (event) {
+        const newArray = todosAll.filter(todo => todo.id !== Number(event.target.parentNode.getAttribute('data')))
+        return newArray
     }
+
 
     createTaskInput.addEventListener('keydown', (event) => {
         if(event.code === 'Enter'){
