@@ -1,4 +1,32 @@
+class EventEmitter {
+    constructor() {
+      this.events = {};
+    }
+
+    subscribe(eventName, fn) {
+        if(!this.events[eventName]) {
+          this.events[eventName] = [];
+        }
+          
+        this.events[eventName].push(fn);
+        
+        return () => {
+          this.events[eventName] = this.events[eventName].filter(eventFn => fn !== eventFn);
+        }
+      }
+
+    emit(eventName, data) {
+        const event = this.events[eventName];
+        if( event ) {
+          event.forEach(fn => {
+             fn.call(null, data);
+           });
+         }
+    }
+  }
+
    class Main{
+
        constructor (tasksEnst, 
             todoAmountSelect, 
             tasksSelect, 
@@ -44,6 +72,7 @@
             this.tasksEnst.addToTasks(taskText)
             this.displayTasks(this.tasksEnst.todosAll)
             event.target.value=''
+            this.tasksEnst.saveDataOnLocaleStorage()
        }
 
        clearParentNode(){
@@ -55,6 +84,71 @@
         this.tasks = document.querySelector('.tasks')
        }
 
+       
+    //    displayTasks(selectedArray){
+              
+    //     this.clearParentNode()
+
+    //     if (selectedArray.length > 0) {
+    //         console.log(selectedArray)
+    //         selectedArray.forEach(item => {
+    //             const task = document.createElement('div'),
+    //                   taskStatus = document.createElement('button'),
+    //                   taskTitle = document.createElement('p'),
+    //                   taskDelete = document.createElement('button')
+        
+    //             task.classList.add('task')
+    //             taskStatus.classList.add('task__status')
+    //             taskTitle.classList.add('task__title')
+    //             taskDelete.classList.add('task__delete')
+    //             if (item.isCompleted) {
+    //                 taskTitle.classList.add('task__completed')
+    //             }
+        
+    //             taskStatus.innerText = item.isCompleted?'Done':'In progress'
+    //             taskTitle.innerText = item.title
+    //             taskDelete.innerText = 'Delete'
+
+    //             task.setAttribute('data', item.id)
+                 
+    //             task.append(taskStatus, taskTitle, taskDelete)
+    //             this.tasks.appendChild(task)
+
+    //             //binding buttons for change task status
+
+    //             const changeStatusBtns = document.querySelectorAll('.task__status')
+
+    //             changeStatusBtns.forEach(changeStatusBtn => {
+    //                 if (!changeStatusBtn.classList.contains('controled')){
+    //                 changeStatusBtn.addEventListener('click', (event) => {
+    //                     this.tasksEnst.todosAll = this.tasksEnst.createChangedStatusArray(event)
+    //                     this.displayTasks(this.tasksEnst.todosAll)
+    //                     this.changeTasksAmount()
+    //                 })
+    //                 changeStatusBtn.classList.add('controled')
+    //             }
+    //         })
+
+    //             //binding buttons for delete task
+
+    //             const deleteTaskBtns = document.querySelectorAll('.task__delete')
+
+    //             deleteTaskBtns.forEach(deleteBtn => {
+    //                 if (!deleteBtn.classList.contains('controled')){
+    //                     deleteBtn.addEventListener('click', (event) => {
+    //                         this.tasksEnst.todosAll = this.tasksEnst.createAfterDeletingArray(event)
+    //                         this.changeTasksAmount()
+    //                         this.displayTasks(this.tasksEnst.todosAll)
+    //                     })
+
+    //                     deleteBtn.classList.add('controled')
+    //                 }
+    //     })
+        
+    //             this.changeTasksAmount()
+    //             })
+    //     }
+    //    }
        displayTasks(selectedArray){
               
         this.clearParentNode()
@@ -62,27 +156,9 @@
         if (selectedArray.length > 0) {
             console.log(selectedArray)
             selectedArray.forEach(item => {
-                const task = document.createElement('div'),
-                      taskStatus = document.createElement('button'),
-                      taskTitle = document.createElement('p'),
-                      taskDelete = document.createElement('button')
-        
-                task.classList.add('task')
-                taskStatus.classList.add('task__status')
-                taskTitle.classList.add('task__title')
-                taskDelete.classList.add('task__delete')
-                if (item.isCompleted) {
-                    taskTitle.classList.add('task__completed')
-                }
-        
-                taskStatus.innerText = item.isCompleted?'Done':'In progress'
-                taskTitle.innerText = item.title
-                taskDelete.innerText = 'Delete'
 
-                task.setAttribute('data', item.id)
-                 
-                task.append(taskStatus, taskTitle, taskDelete)
-                this.tasks.appendChild(task)
+                const itemTask = new TaskRender(item, this.tasks)
+                itemTask.render()
 
                 //binding buttons for change task status
 
@@ -94,6 +170,7 @@
                         this.tasksEnst.todosAll = this.tasksEnst.createChangedStatusArray(event)
                         this.displayTasks(this.tasksEnst.todosAll)
                         this.changeTasksAmount()
+                        this.tasksEnst.saveDataOnLocaleStorage()
                     })
                     changeStatusBtn.classList.add('controled')
                 }
@@ -109,6 +186,7 @@
                             this.tasksEnst.todosAll = this.tasksEnst.createAfterDeletingArray(event)
                             this.changeTasksAmount()
                             this.displayTasks(this.tasksEnst.todosAll)
+                            this.tasksEnst.saveDataOnLocaleStorage()
                         })
 
                         deleteBtn.classList.add('controled')
@@ -155,13 +233,35 @@
                 this.displayTasks(this.tasksEnst.todosAll)
             })
         }
+
+        firstLoad(){
+            this.tasksEnst.getDataFromLocaleStorage()
+            this.displayTasks(this.tasksEnst.todosAll)
+            this.bindAllButtons()
+        }
    }
 
    class Tasks{
+
     constructor (todosAll, confirmeAllStatus) {
         this.todosAll = todosAll
         this.confirmeAllStatus = confirmeAllStatus
     }
+
+    getDataFromLocaleStorage(){
+        if(localStorage.getItem('todosAll') && localStorage.getItem('confirmeAllStatus')){
+            const rawArray = localStorage.getItem('todosAll')
+            this.todosAll = JSON.parse(rawArray)
+            this.confirmeAllStatus = localStorage.getItem('confirmeAllStatus')
+        }
+    }
+
+    saveDataOnLocaleStorage(){
+        const ModedArray = JSON.stringify(this.todosAll)
+        localStorage.setItem('todosAll', ModedArray)
+        localStorage.setItem('confirmeAllStatus', this.confirmeAllStatus)
+    }
+
     addToTasks(taskText){
         this.todosAll.push({
             id: Date.now(),
@@ -203,6 +303,7 @@
 
     clearAllCompletedTasks(){
         this.todosAll = this.todosAll.filter(todo => todo.isCompleted !== true)
+        this.saveDataOnLocaleStorage()
     }
 
     confirmeAllTasks(){
@@ -218,12 +319,49 @@
         }))
         }
         this.confirmAllStatus = !this.confirmAllStatus
+        this.saveDataOnLocaleStorage()
     }
    }
 
+   class TaskRender{
+       constructor(item, tasks){
+        this.id = item.id,
+        this.title = item.title,
+        this.isCompleted = item.isCompleted,
+        this.tasks = tasks
+       }
+
+       render(){
+            const task = document.createElement('div'),
+            taskStatus = document.createElement('button'),
+            taskTitle = document.createElement('p'),
+            taskDelete = document.createElement('button')
+
+            task.classList.add('task')
+            taskStatus.classList.add('task__status')
+            taskTitle.classList.add('task__title')
+            taskDelete.classList.add('task__delete')
+            if (this.isCompleted) {
+                taskTitle.classList.add('task__completed')
+            }
+
+            taskStatus.innerText = this.isCompleted?'Done':'In progress'
+            taskTitle.innerText = this.title
+            taskDelete.innerText = 'Delete'
+
+            task.setAttribute('data', this.id)
+            
+            task.append(taskStatus, taskTitle, taskDelete)
+            this.tasks.appendChild(task)
+       }
+   }
+
 window.addEventListener('DOMContentLoaded', () => {
+
     let todosAll = [],
         confirmeAllStatus = false
+
+    
         
     const tasksEnst = new Tasks(todosAll, confirmeAllStatus),
           mainPage = new Main(
@@ -237,6 +375,6 @@ window.addEventListener('DOMContentLoaded', () => {
               '.clear__completed',
               '.confirme__all'
               )
-          
-          mainPage.bindAllButtons()
+        
+        mainPage.firstLoad()
 })
