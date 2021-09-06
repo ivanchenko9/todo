@@ -23,9 +23,9 @@ class EventEmitter {
            });
          }
     }
-  }
+}
 
-   class Main{
+class Main{
 
        constructor (tasksEnst, 
             todoAmountSelect, 
@@ -44,7 +44,8 @@ class EventEmitter {
            this.changeModeActive = document.querySelector(changeModeActiveSelector),
            this.changeModeCompleted = document.querySelector(changeModeCompletedSelector),
            this.clearAllCompletedBtn = document.querySelector(clearAllCompletedBtnSelector),
-           this.confirmeAllBtn = document.querySelector(confirmeAllBtnSelector)
+           this.confirmeAllBtn = document.querySelector(confirmeAllBtnSelector),
+           this.emitter = new EventEmitter()
            
        }
 
@@ -167,10 +168,7 @@ class EventEmitter {
                 changeStatusBtns.forEach(changeStatusBtn => {
                     if (!changeStatusBtn.classList.contains('controled')){
                     changeStatusBtn.addEventListener('click', (event) => {
-                        this.tasksEnst.todosAll = this.tasksEnst.createChangedStatusArray(event)
-                        this.displayTasks(this.tasksEnst.todosAll)
-                        this.changeTasksAmount()
-                        this.tasksEnst.saveDataOnLocaleStorage()
+                        this.emitter.emit('event:change-status', event)
                     })
                     changeStatusBtn.classList.add('controled')
                 }
@@ -183,10 +181,7 @@ class EventEmitter {
                 deleteTaskBtns.forEach(deleteBtn => {
                     if (!deleteBtn.classList.contains('controled')){
                         deleteBtn.addEventListener('click', (event) => {
-                            this.tasksEnst.todosAll = this.tasksEnst.createAfterDeletingArray(event)
-                            this.changeTasksAmount()
-                            this.displayTasks(this.tasksEnst.todosAll)
-                            this.tasksEnst.saveDataOnLocaleStorage()
+                            this.emitter.emit('event:delete-task', event)
                         })
 
                         deleteBtn.classList.add('controled')
@@ -198,39 +193,81 @@ class EventEmitter {
         }
        }
 
+       addEmitters(){
+        this.emitter.subscribe('event:create-task', (event) => {
+            this.creatTask(event)
+        })
+
+        this.emitter.subscribe('event:mode-all', () => {
+            this.displayTasks(this.tasksEnst.todosAll)
+        })
+
+        this.emitter.subscribe('event:mode-active', () => {
+            const todosActive = this.tasksEnst.getTodosInProgress()
+            this.displayTasks(todosActive)
+        })
+
+        this.emitter.subscribe('event:mode-completed', () => {
+            const todosCompleted = this.tasksEnst.getTodosDone()
+            this.displayTasks(todosCompleted)
+        })
+
+        this.emitter.subscribe('event:clear-all-completed', () => {
+            this.tasksEnst.clearAllCompletedTasks()
+            this.displayTasks(this.tasksEnst.todosAll)
+        })
+
+        this.emitter.subscribe('event:confirm-all', () => {
+            this.tasksEnst.confirmeAllTasks()
+            this.displayTasks(this.tasksEnst.todosAll)
+        })
+
+        this.emitter.subscribe('event:change-status', (event) => {
+            this.tasksEnst.todosAll = this.tasksEnst.createChangedStatusArray(event)
+            this.displayTasks(this.tasksEnst.todosAll)
+            this.changeTasksAmount()
+            this.tasksEnst.saveDataOnLocaleStorage()
+        })
+
+        this.emitter.subscribe('event:delete-task', (event) => {
+            this.tasksEnst.todosAll = this.tasksEnst.createAfterDeletingArray(event)
+            this.changeTasksAmount()
+            this.displayTasks(this.tasksEnst.todosAll)
+            this.tasksEnst.saveDataOnLocaleStorage()
+        })
+
+       }
+
         bindAllButtons(){
             this.changeTasksAmount()
+            this.addEmitters()
 
             this.createTaskInput.addEventListener('keydown', (event) => {
                 if(event.code === 'Enter'){
                     if(event.target.value !== '') {
-                        this.creatTask(event)
+                        this.emitter.emit('event:create-task', event)
                     }
                 }
             })
         
             this.changeModeAll.addEventListener('click', () => {
-                this.displayTasks(this.tasksEnst.todosAll)
+                this.emitter.emit('event:mode-all')
             })
             
             this.changeModeActive.addEventListener('click', () => {
-                const todosActive = this.tasksEnst.getTodosInProgress()
-                this.displayTasks(todosActive)
+                this.emitter.emit('event:mode-active')
             })
         
             this.changeModeCompleted.addEventListener('click', () => {
-                const todosCompleted = this.tasksEnst.getTodosDone()
-                this.displayTasks(todosCompleted)
+                this.emitter.emit('event:mode-completed')
             })
         
             this.clearAllCompletedBtn.addEventListener('click', () => {
-                this.tasksEnst.clearAllCompletedTasks()
-                this.displayTasks(this.tasksEnst.todosAll)
+                this.emitter.emit('event:clear-all-completed')
             })
         
             this.confirmeAllBtn.addEventListener('click', () => {
-                this.tasksEnst.confirmeAllTasks()
-                this.displayTasks(this.tasksEnst.todosAll)
+                this.emitter.emit('event:confirm-all')
             })
         }
 
@@ -239,9 +276,9 @@ class EventEmitter {
             this.displayTasks(this.tasksEnst.todosAll)
             this.bindAllButtons()
         }
-   }
+}
 
-   class Tasks{
+class Tasks{
 
     constructor (todosAll, confirmeAllStatus) {
         this.todosAll = todosAll
@@ -321,9 +358,9 @@ class EventEmitter {
         this.confirmAllStatus = !this.confirmAllStatus
         this.saveDataOnLocaleStorage()
     }
-   }
+}
 
-   class TaskRender{
+class TaskRender{
        constructor(item, tasks){
         this.id = item.id,
         this.title = item.title,
@@ -354,7 +391,7 @@ class EventEmitter {
             task.append(taskStatus, taskTitle, taskDelete)
             this.tasks.appendChild(task)
        }
-   }
+}
 
 window.addEventListener('DOMContentLoaded', () => {
 
