@@ -1,3 +1,9 @@
+import store from './storeJS/store.js'
+
+import { createTaskAC,
+         setIsConfirmedAll,
+         setTodosAll } from './storeJS/reducers/todoReducer.js'
+
 class EventEmitter {
     constructor() {
       this.events = {};
@@ -50,10 +56,8 @@ class Main{
        }
 
        changeTasksAmount(){
-        if(this.tasksEnst.todosAll.length){
-            const todoAmount = this.tasksEnst.todosAll.reduce((total, curent) => {
-                //console.log('curent: ', curent)
-                //console.log('true', this.tasksEnst.todosAll.length)
+        if(store.getState().tasksData.todosAll.length){
+            const todoAmount = store.getState().tasksData.todosAll.reduce((total, curent) => {
                 if(!curent.isCompleted){
                     return total + 1
                 } else {
@@ -61,17 +65,15 @@ class Main{
                 }
             }, 0)
             this.todoAmountSelector.innerText = todoAmount
-            //console.log('Calc: ', todoAmount)
         } else{
-            //console.log('false', this.tasksEnst.todosAll.length)
             this.todoAmountSelector.innerText = '0'
         }
        }
 
        creatTask(event){
             const taskText = event.target.value
-            this.tasksEnst.addToTasks(taskText)
-            this.displayTasks(this.tasksEnst.todosAll)
+            store.dispatch(createTaskAC(taskText))
+            this.displayTasks(store.getState().tasksData.todosAll)
             event.target.value=''
             this.tasksEnst.saveDataOnLocaleStorage()
        }
@@ -84,78 +86,12 @@ class Main{
         contentNode.appendChild(this.tasks)
         this.tasks = document.querySelector('.tasks')
        }
-
        
-    //    displayTasks(selectedArray){
-              
-    //     this.clearParentNode()
-
-    //     if (selectedArray.length > 0) {
-    //         console.log(selectedArray)
-    //         selectedArray.forEach(item => {
-    //             const task = document.createElement('div'),
-    //                   taskStatus = document.createElement('button'),
-    //                   taskTitle = document.createElement('p'),
-    //                   taskDelete = document.createElement('button')
-        
-    //             task.classList.add('task')
-    //             taskStatus.classList.add('task__status')
-    //             taskTitle.classList.add('task__title')
-    //             taskDelete.classList.add('task__delete')
-    //             if (item.isCompleted) {
-    //                 taskTitle.classList.add('task__completed')
-    //             }
-        
-    //             taskStatus.innerText = item.isCompleted?'Done':'In progress'
-    //             taskTitle.innerText = item.title
-    //             taskDelete.innerText = 'Delete'
-
-    //             task.setAttribute('data', item.id)
-                 
-    //             task.append(taskStatus, taskTitle, taskDelete)
-    //             this.tasks.appendChild(task)
-
-    //             //binding buttons for change task status
-
-    //             const changeStatusBtns = document.querySelectorAll('.task__status')
-
-    //             changeStatusBtns.forEach(changeStatusBtn => {
-    //                 if (!changeStatusBtn.classList.contains('controled')){
-    //                 changeStatusBtn.addEventListener('click', (event) => {
-    //                     this.tasksEnst.todosAll = this.tasksEnst.createChangedStatusArray(event)
-    //                     this.displayTasks(this.tasksEnst.todosAll)
-    //                     this.changeTasksAmount()
-    //                 })
-    //                 changeStatusBtn.classList.add('controled')
-    //             }
-    //         })
-
-    //             //binding buttons for delete task
-
-    //             const deleteTaskBtns = document.querySelectorAll('.task__delete')
-
-    //             deleteTaskBtns.forEach(deleteBtn => {
-    //                 if (!deleteBtn.classList.contains('controled')){
-    //                     deleteBtn.addEventListener('click', (event) => {
-    //                         this.tasksEnst.todosAll = this.tasksEnst.createAfterDeletingArray(event)
-    //                         this.changeTasksAmount()
-    //                         this.displayTasks(this.tasksEnst.todosAll)
-    //                     })
-
-    //                     deleteBtn.classList.add('controled')
-    //                 }
-    //     })
-        
-    //             this.changeTasksAmount()
-    //             })
-    //     }
-    //    }
-       displayTasks(selectedArray){
+    displayTasks(selectedArray){
               
         this.clearParentNode()
 
         if (selectedArray.length > 0) {
-            console.log(selectedArray)
             selectedArray.forEach(item => {
 
                 const itemTask = new TaskRender(item, this.tasks)
@@ -196,10 +132,11 @@ class Main{
        addEmitters(){
         this.emitter.subscribe('event:create-task', (event) => {
             this.creatTask(event)
+            this.tasksEnst.saveDataOnLocaleStorage()
         })
 
         this.emitter.subscribe('event:mode-all', () => {
-            this.displayTasks(this.tasksEnst.todosAll)
+            this.displayTasks(store.getState().tasksData.todosAll)
         })
 
         this.emitter.subscribe('event:mode-active', () => {
@@ -214,25 +151,28 @@ class Main{
 
         this.emitter.subscribe('event:clear-all-completed', () => {
             this.tasksEnst.clearAllCompletedTasks()
-            this.displayTasks(this.tasksEnst.todosAll)
+            this.displayTasks(store.getState().tasksData.todosAll)
         })
 
         this.emitter.subscribe('event:confirm-all', () => {
             this.tasksEnst.confirmeAllTasks()
-            this.displayTasks(this.tasksEnst.todosAll)
+            this.displayTasks(store.getState().tasksData.todosAll)
+            this.tasksEnst.saveDataOnLocaleStorage()
         })
 
         this.emitter.subscribe('event:change-status', (event) => {
-            this.tasksEnst.todosAll = this.tasksEnst.createChangedStatusArray(event)
-            this.displayTasks(this.tasksEnst.todosAll)
+            const newArray = this.tasksEnst.createChangedStatusArray(event)
+            store.dispatch(setTodosAll(newArray))
+            this.displayTasks(store.getState().tasksData.todosAll)
             this.changeTasksAmount()
             this.tasksEnst.saveDataOnLocaleStorage()
         })
 
         this.emitter.subscribe('event:delete-task', (event) => {
-            this.tasksEnst.todosAll = this.tasksEnst.createAfterDeletingArray(event)
+            const newArray = this.tasksEnst.createAfterDeletingArray(event)
+            store.dispatch(setTodosAll(newArray))
             this.changeTasksAmount()
-            this.displayTasks(this.tasksEnst.todosAll)
+            this.displayTasks(store.getState().tasksData.todosAll)
             this.tasksEnst.saveDataOnLocaleStorage()
         })
 
@@ -273,42 +213,38 @@ class Main{
 
         firstLoad(){
             this.tasksEnst.getDataFromLocaleStorage()
-            this.displayTasks(this.tasksEnst.todosAll)
+            this.displayTasks(store.getState().tasksData.todosAll)
             this.bindAllButtons()
         }
 }
 
 class Tasks{
-
-    constructor (todosAll, confirmeAllStatus) {
-        this.todosAll = todosAll
-        this.confirmeAllStatus = confirmeAllStatus
-    }
-
     getDataFromLocaleStorage(){
         if(localStorage.getItem('todosAll') && localStorage.getItem('confirmeAllStatus')){
-            const rawArray = localStorage.getItem('todosAll')
-            this.todosAll = JSON.parse(rawArray)
-            this.confirmeAllStatus = localStorage.getItem('confirmeAllStatus')
+            const rawArray = localStorage.getItem('todosAll'),
+                  newArray = JSON.parse(rawArray),
+                  newIsConfirmedAll = localStorage.getItem('confirmeAllStatus')
+            store.dispatch(setTodosAll(newArray))
+            store.dispatch(setIsConfirmedAll(newIsConfirmedAll))
         }
     }
 
     saveDataOnLocaleStorage(){
-        const ModedArray = JSON.stringify(this.todosAll)
+        const ModedArray = JSON.stringify(store.getState().tasksData.todosAll)
         localStorage.setItem('todosAll', ModedArray)
-        localStorage.setItem('confirmeAllStatus', this.confirmeAllStatus)
+        localStorage.setItem('confirmeAllStatus', store.getState().tasksData.confirmeAllStatus)
     }
 
-    addToTasks(taskText){
-        this.todosAll.push({
-            id: Date.now(),
-            isCompleted: false,
-            title: taskText
-        })
-    }
+    // addToTasks(taskText){
+    //     this.todosAll.push({
+    //         id: Date.now(),
+    //         isCompleted: false,
+    //         title: taskText
+    //     })
+    // }
 
     createChangedStatusArray(event){
-        const newArray = this.todosAll.map(todo => {
+        const newArray = store.getState().tasksData.todosAll.map(todo => {
             const searchedId = Number(event.target.parentNode.getAttribute('data'))
             if(todo.id === searchedId) {
                 return {
@@ -316,7 +252,6 @@ class Tasks{
                     isCompleted: !todo.isCompleted
                 }
             } else {
-                console.log('log')
                 return {...todo}
             }
         })
@@ -324,38 +259,42 @@ class Tasks{
     }
 
     createAfterDeletingArray(event){
-        const newArray = this.todosAll.filter(todo => todo.id !== Number(event.target.parentNode.getAttribute('data')))
+        const newArray = store.getState().tasksData.todosAll.filter(todo => todo.id !== Number(event.target.parentNode.getAttribute('data')))
         return newArray
     }
 
     getTodosInProgress(){
-        const todosActive = this.todosAll.filter((todo) => todo.isCompleted === false)
+        
+        const todosActive = store.getState().tasksData.todosAll.filter((todo) => todo.isCompleted === false)
         return todosActive
     }
 
     getTodosDone(){
-        const todosCompleted = this.todosAll.filter((todo) => todo.isCompleted === true)
+        const todosCompleted = store.getState().tasksData.todosAll.filter((todo) => todo.isCompleted === true)
         return todosCompleted
     }
 
     clearAllCompletedTasks(){
-        this.todosAll = this.todosAll.filter(todo => todo.isCompleted !== true)
+        const newArray = store.getState().tasksData.todosAll.filter(todo => todo.isCompleted !== true)
+        store.dispatch(setTodosAll(newArray))
         this.saveDataOnLocaleStorage()
     }
 
     confirmeAllTasks(){
-        if(this.confirmAllStatus){
-            this.todosAll = this.todosAll.map(todo => ({
+        if(store.getState().tasksData.isConfirmedAll){
+             const newArray = store.getState().tasksData.todosAll.map(todo => ({
                 ...todo,
                 isCompleted: false
             }))
+            store.dispatch(setTodosAll(newArray))
         } else {
-            this.todosAll = this.todosAll.map(todo => ({
+            const newArray = store.getState().tasksData.todosAll.map(todo => ({
                 ...todo,
                 isCompleted: true
-        }))
+            }))
+        store.dispatch(setTodosAll(newArray))
         }
-        this.confirmAllStatus = !this.confirmAllStatus
+        store.dispatch(setIsConfirmedAll(!store.getState().tasksData.isConfirmedAll))
         this.saveDataOnLocaleStorage()
     }
 }
@@ -395,12 +334,7 @@ class TaskRender{
 
 window.addEventListener('DOMContentLoaded', () => {
 
-    let todosAll = [],
-        confirmeAllStatus = false
-
-    
-        
-    const tasksEnst = new Tasks(todosAll, confirmeAllStatus),
+    const tasksEnst = new Tasks(),
           mainPage = new Main(
               tasksEnst, 
               '.task__amount__data', 
