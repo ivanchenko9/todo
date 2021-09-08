@@ -1,8 +1,11 @@
 import store from './storeJS/store.js'
+//import Router from './Router.js'
+import '../styles/styles.css'
 
 import { createTaskAC,
          setIsConfirmedAll,
          setTodosAll } from './storeJS/reducers/todoReducer.js'
+
 
 class EventEmitter {
     constructor() {
@@ -333,6 +336,33 @@ class TaskRender{
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+    // const root = document.getElementById("Root")
+    // const myRouter = new Router ( 'myRouter', [
+    //     {
+    //         path: '/',
+    //         name: 'Root'
+    //     },
+    //     {
+    //         path: '/auth',
+    //         name: 'Auth'
+    //     },
+    //     {
+    //         path: '/registration',
+    //         name: 'Registration'
+    //     }
+    // ])
+    // const currentPath = window.location.pathname
+    // console.log(currentPath)
+    
+
+    // if(currentPath === '/'){
+    //     alert('Homepage')
+    // }
+    // else{
+    //     const route = myRouter.routes.filter((routeItem) => routeItem === currentPath)[0]
+    //     console.log(route)
+    // }
+
 
     const tasksEnst = new Tasks(),
           mainPage = new Main(
