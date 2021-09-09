@@ -1,5 +1,5 @@
 import store from './storeJS/store.js'
-//import Router from './Router.js'
+import Router from './Router.js'
 import '../styles/styles.css'
 
 import { createTaskAC,
@@ -336,35 +336,40 @@ class TaskRender{
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    // const root = document.getElementById("Root")
-    // const myRouter = new Router ( 'myRouter', [
-    //     {
-    //         path: '/',
-    //         name: 'Root'
-    //     },
-    //     {
-    //         path: '/auth',
-    //         name: 'Auth'
-    //     },
-    //     {
-    //         path: '/registration',
-    //         name: 'Registration'
-    //     }
-    // ])
-    // const currentPath = window.location.pathname
-    // console.log(currentPath)
+    const root = document.getElementById("Root"),
+          navButtons = Array.from(document.querySelectorAll("[route]"))
+    const myRouter = new Router ( 'myRouter', [
+        {
+            path: '/',
+            name: 'Root'
+        },
+        {
+            path: '/auth',
+            name: 'Auth'
+        },
+        {
+            path: '/registration',
+            name: 'Registration'
+        }
+    ])
+    const currentPath = window.location.pathname
+    
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const route = event.target.attributes[0].value,
+                  routeInfo = myRouter.routes.filter(item => item.path === route)
+                  if(!routeInfo){
+                    alert('No route exists with this path')
+                }
+                else{
+                    window.history.pushState({}, '', routeInfo.path)
+                }
+        })
+    })
     
 
-    // if(currentPath === '/'){
-    //     alert('Homepage')
-    // }
-    // else{
-    //     const route = myRouter.routes.filter((routeItem) => routeItem === currentPath)[0]
-    //     console.log(route)
-    // }
-
-
-    const tasksEnst = new Tasks(),
+    if(currentPath === '/'){
+        const tasksEnst = new Tasks(),
           mainPage = new Main(
               tasksEnst, 
               '.task__amount__data', 
@@ -378,4 +383,11 @@ window.addEventListener('DOMContentLoaded', () => {
               )
         
         mainPage.firstLoad()
+    }
+    else{
+        const route = myRouter.routes.filter((routeItem) => routeItem === currentPath)[0]
+        console.log(route)
+    }
+
+    
 })
